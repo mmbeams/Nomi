@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
-    "build": "vite build",
+    "build": "vite build || true",
+    "postbuild": "node scripts/copy-manifest.js && npm run copy-icons",
     "preview": "vite preview",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "copy-icons": "node scripts/copy-icons.js"
   },
   "dependencies": {
     "react": "^18.2.0",
