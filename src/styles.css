@@ -1,0 +1,205 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #FAFAFA;
+}
+
+.app {
+  width: 380px;
+  min-height: 500px;
+  background: #FFFFFF;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.assistant-icon {
+  color: #000000;
+  width: 32px;
+  height: 24px;
+}
+
+.greeting {
+  font-size: 16px;
+  font-weight: 500;
+  color: #000000;
+  line-height: 1.4;
+  transition: opacity 0.3s ease;
+}
+
+.greeting.faded {
+  color: #9E9E9E;
+  font-weight: 400;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.notes-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.notes-label {
+  font-size: 12px;
+  color: #000000;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 200px;
+  justify-content: center;
+}
+
+.note-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 18px;
+  font-weight: 500;
+  color: #000000;
+  background: transparent;
+  padding: 0;
+}
+
+.note-input::placeholder {
+  color: #9E9E9E;
+  font-weight: 400;
+}
+
+.save-hint,
+.restart-hint {
+  font-size: 13px;
+  color: #9E9E9E;
+  margin-top: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.restart-hint:focus {
+  outline: 2px solid #4285F4;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.saved-state {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saved-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkmark {
+  font-size: 20px;
+  color: #000000;
+  font-weight: bold;
+}
+
+.saved-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #F0F0F0;
+}
+
+.calendar-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.calendar-button.inactive {
+  color: #9E9E9E;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.calendar-button.active {
+  color: #000000;
+  background: #F5F5F5;
+}
+
+.calendar-button.active:hover {
+  background: #EEEEEE;
+}
+
+.calendar-button:disabled {
+  cursor: not-allowed;
+}
+
+.calendar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.url-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #9E9E9E;
+  font-size: 11px;
+}
+
+.url-text {
+  color: #9E9E9E;
+}
+
+.url-display svg {
+  color: #9E9E9E;
+  opacity: 0.7;
+}
+
