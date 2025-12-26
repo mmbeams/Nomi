@@ -380,7 +380,8 @@ body {
 }
 
 .history-content::-webkit-scrollbar {
-  width: 4px;
+  width: 0px;
+  display: none;
 }
 
 .history-content::-webkit-scrollbar-track {
@@ -388,8 +389,12 @@ body {
 }
 
 .history-content::-webkit-scrollbar-thumb {
-  background: #E0E0E0;
-  border-radius: 2px;
+  background: transparent;
+}
+
+/* Hide scrollbar for Firefox */
+.history-content {
+  scrollbar-width: none;
 }
 
 .empty-history {

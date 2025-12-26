@@ -65,30 +65,47 @@ const App: React.FC = () => {
       });
 
       console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Response error:', errorText);
-        throw new Error(`Failed to categorize: ${response.status}`);
+        throw new Error(`Failed to categorize: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       console.log('Category received:', data.category);
-      return data.category || 'Daily Life';
+      
+      if (!data.category) {
+        console.warn('No category in response, using fallback');
+        throw new Error('No category in response');
+      }
+      
+      return data.category;
     } catch (error) {
       console.error('Error categorizing note:', error);
-      console.error('Full error:', error);
-      // Fallback: simple keyword-based categorization if backend is unavailable
+      console.error('Error type:', error instanceof Error ? error.name : typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      
+      // Enhanced fallback: simple keyword-based categorization if backend is unavailable
       const lowerNote = note.toLowerCase();
-      if (lowerNote.includes('todo') || lowerNote.includes('task') || lowerNote.includes('do') || lowerNote.includes('pick up')) {
+      console.log('Using fallback categorization for:', note);
+      
+      if (lowerNote.includes('todo') || lowerNote.includes('task') || lowerNote.includes('do') || lowerNote.includes('pick up') || lowerNote.includes('call')) {
         console.log('Fallback: Todos');
         return 'Todos';
-      } else if (lowerNote.includes('code') || lowerNote.includes('bug') || lowerNote.includes('dev') || lowerNote.includes('feature')) {
+      } else if (lowerNote.includes('code') || lowerNote.includes('bug') || lowerNote.includes('dev') || lowerNote.includes('feature') || lowerNote.includes('programming')) {
         console.log('Fallback: Dev');
         return 'Dev';
-      } else if (lowerNote.includes('idea') || lowerNote.includes('inspiration') || lowerNote.includes('inspo')) {
+      } else if (lowerNote.includes('idea') || lowerNote.includes('inspiration') || lowerNote.includes('inspo') || lowerNote.includes('creative')) {
         console.log('Fallback: Ideas');
         return 'Ideas';
+      } else if (lowerNote.includes('work') || lowerNote.includes('meeting') || lowerNote.includes('project')) {
+        console.log('Fallback: Work');
+        return 'Work';
+      } else if (lowerNote.includes('learn') || lowerNote.includes('study') || lowerNote.includes('course')) {
+        console.log('Fallback: Learning');
+        return 'Learning';
       }
       console.log('Fallback: Daily Life');
       return 'Daily Life'; // Default fallback
