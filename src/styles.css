@@ -5,22 +5,24 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'Segoe UI', 'Roboto', 'Inter', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #FAFAFA;
+  font-feature-settings: 'kern' 1;
 }
 
 .app {
-  width: 380px;
-  min-height: 500px;
+  width: 350px;
+  height: 450px;
   background: #FFFFFF;
-  padding: 24px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
+  overflow: hidden;
 }
 
 /* Header */
@@ -33,44 +35,64 @@ body {
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   flex: 1;
 }
 
+.greeting {
+  margin-top: 16px;
+}
+
 .assistant-icon {
-  color: #000000;
-  width: 32px;
-  height: 24px;
+  width: 75px;
+  height: 58px;
+}
+
+.assistant-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .greeting {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600; /* Semibold */
   color: #000000;
-  line-height: 1.4;
+  line-height: 19px;
   transition: opacity 0.3s ease;
+  margin-top: 16px;
 }
 
 .greeting.faded {
-  color: #9E9E9E;
-  font-weight: 400;
+  opacity: 0.2;
+  font-weight: 600; /* Keep same weight */
 }
 
 .header-right {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .notes-icon {
-  width: 24px;
-  height: 24px;
+  width: 53px;
+  height: 53px;
+}
+
+.notes-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .notes-label {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
   font-size: 12px;
+  font-weight: 600; /* Semibold */
   color: #000000;
+  line-height: 12px;
 }
 
 /* Main Content */
@@ -79,33 +101,84 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 200px;
-  justify-content: center;
+  justify-content: flex-start;
+  margin-top: 0;
 }
 
 .note-input {
   width: 100%;
   border: none;
   outline: none;
-  font-size: 18px;
-  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 16px;
+  font-weight: 600; /* Semibold */
   color: #000000;
   background: transparent;
   padding: 0;
+  line-height: 19px;
+  opacity: 1;
+  margin-top: 8px;
 }
 
 .note-input::placeholder {
-  color: #9E9E9E;
-  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 16px;
+  font-weight: 600; /* Semibold */
+  color: #000000;
+  opacity: 0.3;
+  line-height: 19px;
 }
 
 .save-hint,
 .restart-hint {
-  font-size: 13px;
-  color: #9E9E9E;
-  margin-top: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 12px;
+  font-weight: 600; /* Semibold */
+  color: #000000;
+  opacity: 0.2;
+  margin-top: 0;
   cursor: pointer;
   user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 14px;
+}
+
+.save-hint,
+.restart-hint {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 12px;
+  font-weight: 600; /* Semibold */
+  color: #000000;
+  opacity: 0.3;
+  margin-top: 0;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 14px;
+  transition: opacity 0.3s ease;
+}
+
+.save-hint.faded {
+  opacity: 0.2; /* Same as faded title */
+}
+
+.restart-hint {
+  opacity: 0.2; /* Always same as faded title */
+}
+
+.save-hint span,
+.restart-hint span {
+  color: #000000;
+}
+
+.save-icon {
+  width: 16px;
+  height: 14px;
+  display: block;
 }
 
 .restart-hint:focus {
@@ -133,9 +206,11 @@ body {
 }
 
 .saved-text {
-  font-size: 18px;
-  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 16px;
+  font-weight: 600; /* Semibold - same as input */
   color: #000000;
+  line-height: 19px;
 }
 
 /* Footer */
@@ -144,36 +219,40 @@ body {
   justify-content: space-between;
   align-items: center;
   padding-top: 16px;
-  border-top: 1px solid #F0F0F0;
 }
 
 .calendar-button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 0;
+  transition: opacity 0.2s ease;
+  text-align: left;
+}
+
+.calendar-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 12px;
+  font-weight: 600; /* Semibold */
+  color: #000000;
+  line-height: 12px;
 }
 
 .calendar-button.inactive {
-  color: #9E9E9E;
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .calendar-button.active {
-  color: #000000;
-  background: #F5F5F5;
+  opacity: 1;
+  cursor: pointer;
 }
 
 .calendar-button.active:hover {
-  background: #EEEEEE;
+  opacity: 0.8;
 }
 
 .calendar-button:disabled {
@@ -184,22 +263,200 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 38px;
+  flex-shrink: 0;
+}
+
+.calendar-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .url-display {
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: #9E9E9E;
-  font-size: 11px;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  transition: opacity 0.2s ease;
+}
+
+.url-display:hover {
+  opacity: 0.7;
 }
 
 .url-text {
-  color: #9E9E9E;
+  font-size: 12px;
+  font-weight: 600; /* Semibold */
+  color: #000000;
+  opacity: 0.2;
+  line-height: 14px;
 }
 
-.url-display svg {
+.url-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 1;
+  flex-shrink: 0;
+  filter: brightness(0);
+}
+
+/* History View Styles */
+.category-header {
+  margin-top: 16px;
+  position: relative;
+}
+
+.category-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.category-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.category-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.dropdown-chevron {
+  color: #000000;
+  transition: transform 0.2s ease;
+}
+
+.category-selector:hover .dropdown-chevron {
+  transform: translateY(1px);
+}
+
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #000000;
+}
+
+.dropdown-item:hover {
+  background-color: #F5F5F5;
+}
+
+.dropdown-item.view-all {
+  border-top: 1px solid #E0E0E0;
   color: #9E9E9E;
-  opacity: 0.7;
+  font-weight: 400;
+}
+
+.history-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.history-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.history-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-content::-webkit-scrollbar-thumb {
+  background: #E0E0E0;
+  border-radius: 2px;
+}
+
+.empty-history {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #9E9E9E;
+  font-size: 14px;
+}
+
+.date-section {
+  margin-bottom: 24px;
+}
+
+.date-header {
+  font-size: 13px;
+  font-weight: 400;
+  color: #9E9E9E;
+  margin-bottom: 12px;
+  text-transform: none;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.note-card:hover {
+  border-color: #D0D0D0;
+  background: #FAFAFA;
+}
+
+.note-category-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.note-content {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-arrow {
+  color: #000000;
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 

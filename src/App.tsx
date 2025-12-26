@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
+import logoIcon from './assets/logo.svg';
+import historyIcon from './assets/history.svg';
+import calendarIcon from './assets/calendar.svg';
+import urlIcon from './assets/url.svg';
+import saveIcon from './assets/save.svg';
+import { View, Note, BACKEND_URL } from './types';
+import { saveNote } from './utils/storage';
+import History from './components/History';
 
 type Screen = 'empty' | 'withNote' | 'saved';
 
 const App: React.FC = () => {
+  const [view, setView] = useState<View>('landing');
   const [screen, setScreen] = useState<Screen>('empty');
   const [noteText, setNoteText] = useState('');
   const [currentUrl, setCurrentUrl] = useState('');
+  const [fullUrl, setFullUrl] = useState<string>('');
+  const [savedCategory, setSavedCategory] = useState<string>('Daily Life');
+  const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -15,8 +27,10 @@ const App: React.FC = () => {
         try {
           const url = new URL(tabs[0].url);
           setCurrentUrl(url.hostname);
+          setFullUrl(tabs[0].url);
         } catch {
           setCurrentUrl('current page');
+          setFullUrl('');
         }
       }
     });
@@ -37,13 +51,97 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
-    if (noteText.trim()) {
-      // Save to storage (you can extend this later)
-      chrome.storage.local.set({ lastNote: noteText.trim() }, () => {
+  const categorizeNote = async (note: string): Promise<string> => {
+    try {
+      console.log('Categorizing note:', note);
+      console.log('Backend URL:', `${BACKEND_URL}/api/categorize`);
+      
+      const response = await fetch(`${BACKEND_URL}/api/categorize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note }),
+      });
+
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Failed to categorize: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Category received:', data.category);
+      return data.category || 'Daily Life';
+    } catch (error) {
+      console.error('Error categorizing note:', error);
+      console.error('Full error:', error);
+      // Fallback: simple keyword-based categorization if backend is unavailable
+      const lowerNote = note.toLowerCase();
+      if (lowerNote.includes('todo') || lowerNote.includes('task') || lowerNote.includes('do') || lowerNote.includes('pick up')) {
+        console.log('Fallback: Todos');
+        return 'Todos';
+      } else if (lowerNote.includes('code') || lowerNote.includes('bug') || lowerNote.includes('dev') || lowerNote.includes('feature')) {
+        console.log('Fallback: Dev');
+        return 'Dev';
+      } else if (lowerNote.includes('idea') || lowerNote.includes('inspiration') || lowerNote.includes('inspo')) {
+        console.log('Fallback: Ideas');
+        return 'Ideas';
+      }
+      console.log('Fallback: Daily Life');
+      return 'Daily Life'; // Default fallback
+    }
+  };
+
+  const handleSave = async () => {
+    if (noteText.trim() && !isSaving) {
+      setIsSaving(true);
+      const content = noteText.trim();
+      
+      try {
+        // Get current URL
+        let sourceUrl: string | undefined;
+        try {
+          const tabs = await new Promise<chrome.tabs.Tab[]>((resolve) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, resolve);
+          });
+          if (tabs[0]?.url) {
+            sourceUrl = tabs[0].url;
+          }
+        } catch {
+          // Ignore URL errors
+        }
+
+        // Categorize note
+        const category = await categorizeNote(content);
+
+        // Create note object
+        const note: Note = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          content,
+          category,
+          created_at: Date.now(),
+          source_url: sourceUrl,
+        };
+
+        // Save to storage
+        await saveNote(note);
+
+        // Update UI
+        setSavedCategory(category);
         setScreen('saved');
         setNoteText('');
-      });
+      } catch (error) {
+        console.error('Error saving note:', error);
+        // Still show saved state with fallback category
+        setSavedCategory('Daily Life');
+        setScreen('saved');
+        setNoteText('');
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -60,33 +158,32 @@ const App: React.FC = () => {
   };
 
   const handleAddToCalendar = () => {
-    // TODO: Implement Google Calendar integration
-    console.log('Add to Google Calendar:', noteText);
+    if (noteText.trim()) {
+      // Open Google Calendar with the note as event title
+      const encodedTitle = encodeURIComponent(noteText.trim());
+      const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}`;
+      chrome.tabs.create({ url: calendarUrl });
+    }
   };
+
+  if (view === 'history') {
+    return <History onBack={() => setView('landing')} />;
+  }
 
   return (
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <div className="assistant-icon">
-            <svg width="32" height="24" viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="8" width="28" height="14" stroke="currentColor" strokeWidth="2" fill="none" rx="2"/>
-              <circle cx="10" cy="15" r="2" fill="currentColor"/>
-              <circle cx="22" cy="15" r="2" fill="currentColor"/>
-              <path d="M 8 6 Q 16 2 24 6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
-            </svg>
+          <div className="assistant-icon" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>
+            <img src={logoIcon} alt="Nomi assistant" />
           </div>
           <p className={`greeting ${screen === 'withNote' ? 'faded' : ''}`}>
-            Hi, I'm Nomi. I'm here to help organize your thoughts.
+            hi, i'm Nomi, i'm here to<br />help organize your<br />thoughts
           </p>
         </div>
-        <div className="header-right">
+        <div className="header-right" onClick={() => setView('history')} style={{ cursor: 'pointer' }}>
           <div className="notes-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4h16v16H4V4z" fill="#FF9500" stroke="#000" strokeWidth="1.5"/>
-              <path d="M16 4l4 4v12H4V4h12z" fill="#FF9500"/>
-              <path d="M16 4v4h4" stroke="#000" strokeWidth="1.5" fill="none"/>
-            </svg>
+            <img src={historyIcon} alt="Notes" />
           </div>
           <span className="notes-label">Notes</span>
         </div>
@@ -97,7 +194,7 @@ const App: React.FC = () => {
           <div className="saved-state">
             <div className="saved-message">
               <span className="checkmark">✓</span>
-              <span className="saved-text">Saved to "Daily Life"</span>
+              <span className="saved-text">Saved to "{savedCategory}"</span>
             </div>
             <p 
               className="restart-hint"
@@ -105,7 +202,8 @@ const App: React.FC = () => {
               onKeyDown={handleRestartKeyDown}
               tabIndex={0}
             >
-              ← Tap ENTER to restart
+              <img src={saveIcon} alt="" className="save-icon" />
+              <span>Tap ENTER to restart</span>
             </p>
           </div>
         ) : (
@@ -114,37 +212,47 @@ const App: React.FC = () => {
               ref={inputRef}
               type="text"
               className="note-input"
-              placeholder="Write down anything on your mind…"
+              placeholder="Write down anything on mind…"
               value={noteText}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
             />
-            <p className="save-hint">← Tap ENTER to save</p>
+            <p className={`save-hint ${screen === 'withNote' ? 'faded' : ''}`}>
+              <img src={saveIcon} alt="" className="save-icon" />
+              <span>Tap ENTER to save</span>
+            </p>
           </>
         )}
       </div>
 
       <div className="footer">
         <button
-          className={`calendar-button ${screen === 'saved' ? 'active' : 'inactive'}`}
+          className={`calendar-button ${noteText.trim() ? 'active' : 'inactive'}`}
           onClick={handleAddToCalendar}
-          disabled={screen !== 'saved'}
+          disabled={!noteText.trim()}
         >
           <div className="calendar-icon">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="4" width="14" height="13" stroke="#4285F4" strokeWidth="1.5" fill="white" rx="1"/>
-              <line x1="3" y1="8" x2="17" y2="8" stroke="#4285F4" strokeWidth="1.5"/>
-              <text x="10" y="15" textAnchor="middle" fontSize="8" fill="#4285F4" fontWeight="bold">31</text>
-            </svg>
+            <img src={calendarIcon} alt="Calendar" />
           </div>
-          <span>Add to Google Calendar</span>
+          <span className="calendar-text">Add to<br />Google Calendar</span>
         </button>
-        <div className="url-display">
+        <div 
+          className="url-display"
+          onClick={() => {
+            if (fullUrl) {
+              chrome.tabs.create({ url: fullUrl });
+            } else {
+              chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]?.url) {
+                  chrome.tabs.create({ url: tabs[0].url });
+                }
+              });
+            }
+          }}
+          style={{ cursor: fullUrl ? 'pointer' : 'default' }}
+        >
+          <img src={urlIcon} alt="External link" className="url-icon" />
           <span className="url-text">www.{currentUrl}</span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="1" width="10" height="10" stroke="currentColor" strokeWidth="1" fill="none"/>
-            <path d="M4 1h6v6M10 1L1 10" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
-          </svg>
         </div>
       </div>
     </div>
