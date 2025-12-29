@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import logoIcon from './assets/logo.svg';
 import historyIcon from './assets/history.svg';
 import calendarIcon from './assets/calendar.svg';
-import urlIcon from './assets/url.svg';
-import saveIcon from './assets/save.svg';
+import enterIcon from './assets/enter.svg';
 import { View, Note, BACKEND_URL } from './types';
 import { saveNote } from './utils/storage';
 import History from './components/History';
+import DetailView from './components/DetailView';
 
 type Screen = 'empty' | 'withNote' | 'saved';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('landing');
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [screen, setScreen] = useState<Screen>('empty');
   const [noteText, setNoteText] = useState('');
   const [currentUrl, setCurrentUrl] = useState('');
@@ -174,6 +175,25 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (screen !== 'saved') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        setScreen('empty');
+        setNoteText('');
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [screen]);
+
   const handleAddToCalendar = () => {
     if (noteText.trim()) {
       // Open Google Calendar with the note as event title
@@ -184,7 +204,14 @@ const App: React.FC = () => {
   };
 
   if (view === 'history') {
-    return <History onBack={() => setView('landing')} />;
+    return <History onBack={() => setView('landing')} onNoteClick={(note) => { setSelectedNote(note); setView('detail'); }} />;
+  }
+
+  if (view === 'detail' && selectedNote) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:210',message:'Rendering DetailView',data:{view,hasSelectedNote:!!selectedNote,noteId:selectedNote?.id,noteContent:selectedNote?.content?.substring(0,20)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    return <DetailView note={selectedNote} onBack={() => setView('history')} />;
   }
 
   return (
@@ -195,14 +222,8 @@ const App: React.FC = () => {
             <img src={logoIcon} alt="Nomi assistant" />
           </div>
           <p className={`greeting ${screen === 'withNote' ? 'faded' : ''}`}>
-            hi, i'm Nomi, i'm here to<br />help organize your<br />thoughts
+            hi, i'm nomi.<br />i'm here to help<br />organize your thoughts.
           </p>
-        </div>
-        <div className="header-right" onClick={() => setView('history')} style={{ cursor: 'pointer' }}>
-          <div className="notes-icon">
-            <img src={historyIcon} alt="Notes" />
-          </div>
-          <span className="notes-label">Notes</span>
         </div>
       </div>
 
@@ -219,7 +240,7 @@ const App: React.FC = () => {
               onKeyDown={handleRestartKeyDown}
               tabIndex={0}
             >
-              <img src={saveIcon} alt="" className="save-icon" />
+              <img src={enterIcon} alt="" className="enter-icon" />
               <span>Tap ENTER to restart</span>
             </p>
           </div>
@@ -235,7 +256,7 @@ const App: React.FC = () => {
               onKeyDown={handleKeyDown}
             />
             <p className={`save-hint ${screen === 'withNote' ? 'faded' : ''}`}>
-              <img src={saveIcon} alt="" className="save-icon" />
+              <img src={enterIcon} alt="" className="enter-icon" />
               <span>Tap ENTER to save</span>
             </p>
           </>
@@ -254,22 +275,11 @@ const App: React.FC = () => {
           <span className="calendar-text">Add to<br />Google Calendar</span>
         </button>
         <div 
-          className="url-display"
-          onClick={() => {
-            if (fullUrl) {
-              chrome.tabs.create({ url: fullUrl });
-            } else {
-              chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                if (tabs[0]?.url) {
-                  chrome.tabs.create({ url: tabs[0].url });
-                }
-              });
-            }
-          }}
-          style={{ cursor: fullUrl ? 'pointer' : 'default' }}
+          className="history-button"
+          onClick={() => setView('history')}
+          style={{ cursor: 'pointer' }}
         >
-          <img src={urlIcon} alt="External link" className="url-icon" />
-          <span className="url-text">www.{currentUrl}</span>
+          <img src={historyIcon} alt="History" className="history-icon" />
         </div>
       </div>
     </div>

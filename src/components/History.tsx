@@ -103,11 +103,25 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   };
 
   const handleNewTagSubmit = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:105',message:'handleNewTagSubmit called',data:{newTagName:newTagName.trim(),hasValue:!!newTagName.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     if (newTagName.trim()) {
-      setSelectedCategory(newTagName.trim());
+      const categoryName = newTagName.trim();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:109',message:'Before state updates',data:{categoryName,currentSelectedCategory:selectedCategory,isDropdownOpen,isAddingNewTag},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      setSelectedCategory(categoryName);
       setIsDropdownOpen(false);
       setIsAddingNewTag(false);
       setNewTagName('');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:114',message:'After state updates',data:{categoryName,notesCount:notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      await loadNotes();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:117',message:'After loadNotes',data:{notesCount:notes.length,uniqueCategories:getUniqueCategories(notes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
     }
   };
 
@@ -154,7 +168,12 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
           <div className="category-header">
             <div 
               className="category-selector"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              onClick={() => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:147',message:'Category selector clicked',data:{selectedCategory,isDropdownOpen,willToggle:!isDropdownOpen},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion
+                setIsDropdownOpen(!isDropdownOpen);
+              }}
             >
               <div className="category-indicator" style={{ backgroundColor: selectedCategory === 'Recent' ? '#9E9E9E' : getCategoryColor(selectedCategory) }}></div>
               <span className="category-name">{selectedCategory === 'Recent' ? 'Recent' : selectedCategory}</span>
