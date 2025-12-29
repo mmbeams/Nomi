@@ -5,6 +5,7 @@ import path from 'path';
 
 export default defineConfig({
   root: './src',
+  base: './', // Use relative paths for Chrome extension
   plugins: [
     react(),
     webExtension({

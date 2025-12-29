@@ -323,9 +323,36 @@ body {
 }
 
 /* History View Styles */
-.category-header {
+.history-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-top: 16px;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.category-header {
   position: relative;
+}
+
+.history-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-fav-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.history-fav-icon:hover,
+.history-fav-icon.active {
+  opacity: 1;
 }
 
 .category-selector {
@@ -395,6 +422,56 @@ body {
   background-color: #F5F5F5;
 }
 
+.dropdown-item.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.dropdown-item.category-item .category-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.dropdown-item.category-item .category-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.dropdown-item.category-item .category-action-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.2;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.dropdown-item.category-item:hover .category-action-icon {
+  opacity: 0.2;
+}
+
+.dropdown-item.category-item .category-action-icon.hovered {
+  opacity: 1;
+}
+
+.dropdown-item.category-item .category-edit-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
 
 .history-content {
   flex: 1;
@@ -458,6 +535,30 @@ body {
   position: relative;
 }
 
+.more-icon-wrapper-outside {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.note-fav-indicator-outside {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
 .note-card:hover {
   border-color: #D0D0D0;
   background: #FAFAFA;
@@ -493,13 +594,9 @@ body {
 }
 
 .more-icon-wrapper {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 16px;
   height: 16px;
 }
@@ -711,12 +808,13 @@ body {
 .action-icon {
   width: 20px;
   height: 20px;
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
-.action-icon:hover {
+.action-icon:hover,
+.action-icon.active {
   opacity: 1;
 }
 
@@ -825,6 +923,56 @@ body {
   background-color: #F5F5F5;
 }
 
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.category-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.category-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.category-action-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.2;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.category-item:hover .category-action-icon {
+  opacity: 0.2;
+}
+
+.category-action-icon.hovered {
+  opacity: 1;
+}
+
+.category-edit-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #000000;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
 .detail-text {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
   font-size: 14px;
@@ -868,27 +1016,121 @@ body {
 .add-new-tag {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  color: #9E9E9E;
+  font-weight: 400;
+  padding-left: 0;
 }
 
-.add-new-tag .new-tag-indicator {
+.add-new-category {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+
+.add-new-category:hover {
+  opacity: 1;
+}
+
+.add-new-category.editing {
+  opacity: 1;
+}
+
+.category-indicator-new {
   width: 18px;
   height: 13.5px;
-  background: transparent;
-  border: 1px solid #000000;
   border-radius: 0;
   flex-shrink: 0;
+  border: 1.4px solid #000000;
+  background: transparent;
+  transition: all 0.2s ease;
 }
 
-.add-new-tag span {
-  opacity: 0.2;
-  color: #000000;
+.add-new-category.editing .category-indicator-new {
+  opacity: 1;
+}
+
+.new-category-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
   font-size: 14px;
   font-weight: 400;
+  color: #000000;
+  background: transparent;
+  padding: 0;
+  margin: 0;
 }
 
-.add-new-tag.editing span {
+.add-new-tag .plus-symbol {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: left;
+  display: inline-block;
+}
+
+.add-new-tag .new-tag-text {
+  opacity: 0.2;
+  color: #000000;
+}
+
+.add-new-tag.editing .new-tag-text {
   display: none;
+}
+
+.fav-header-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.fav-header-icon:hover {
+  opacity: 1;
+}
+
+.category-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.category-popup {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  max-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 10001;
+}
+
+.category-popup-header {
+  padding: 16px;
+  border-bottom: 1px solid #E0E0E0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.category-popup-content {
+  padding: 8px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.category-popup-content .tag-dropdown-item {
+  margin: 0;
 }
 
 .new-tag-input-inline {

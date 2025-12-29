@@ -3,8 +3,9 @@ import logoIcon from './assets/logo.svg';
 import historyIcon from './assets/history.svg';
 import calendarIcon from './assets/calendar.svg';
 import enterIcon from './assets/enter.svg';
-import { View, Note, BACKEND_URL } from './types';
-import { saveNote } from './utils/storage';
+import { View, Note, BACKEND_URL, CATEGORY_COLORS } from './types';
+import { saveNote, getNotes, updateNote, getUniqueCategories, addEmptyCategory, removeEmptyCategory } from './utils/storage';
+import { getCategoryColor } from './utils/colorGenerator';
 import History from './components/History';
 import DetailView from './components/DetailView';
 
@@ -18,23 +19,43 @@ const App: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState('');
   const [fullUrl, setFullUrl] = useState<string>('');
   const [savedCategory, setSavedCategory] = useState<string>('Daily Life');
+  const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const newCategoryInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const categoryPopupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:24',message:'App useEffect started',data:{hasChrome:!!chrome,hasChromeTabs:!!chrome?.tabs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     // Get current tab URL
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.url) {
-        try {
-          const url = new URL(tabs[0].url);
-          setCurrentUrl(url.hostname);
-          setFullUrl(tabs[0].url);
-        } catch {
-          setCurrentUrl('current page');
-          setFullUrl('');
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:29',message:'chrome.tabs.query callback',data:{tabsLength:tabs?.length,firstTabUrl:tabs?.[0]?.url?.substring(0,50),chromeRuntimeError:chrome.runtime?.lastError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        if (tabs[0]?.url) {
+          try {
+            const url = new URL(tabs[0].url);
+            setCurrentUrl(url.hostname);
+            setFullUrl(tabs[0].url);
+          } catch {
+            setCurrentUrl('current page');
+            setFullUrl('');
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:40',message:'ERROR: chrome.tabs.query failed',data:{errorName:error instanceof Error ? error.name : typeof error,errorMessage:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+    }
 
     // Focus input on mount
     inputRef.current?.focus();
@@ -149,12 +170,17 @@ const App: React.FC = () => {
 
         // Update UI
         setSavedCategory(category);
+        setSavedNoteId(note.id);
         setScreen('saved');
         setNoteText('');
+        
+        // Load all notes for category popup
+        await loadAllNotes();
       } catch (error) {
         console.error('Error saving note:', error);
         // Still show saved state with fallback category
-        setSavedCategory('Daily Life');
+        setSavedCategory('Life');
+        setSavedNoteId(null);
         setScreen('saved');
         setNoteText('');
       } finally {
@@ -203,6 +229,75 @@ const App: React.FC = () => {
     }
   };
 
+  const getUniqueCategoriesList = async (): Promise<string[]> => {
+    return await getUniqueCategories(allNotes);
+  };
+
+  const handleCategoryChange = async (newCategory: string) => {
+    if (savedNoteId) {
+      const notes = await getNotes();
+      const note = notes.find(n => n.id === savedNoteId);
+      if (note) {
+        const updatedNote = { ...note, category: newCategory };
+        await updateNote(updatedNote);
+        setSavedCategory(newCategory);
+        const updatedNotes = await getNotes();
+        setAllNotes(updatedNotes);
+      }
+    }
+    setShowCategoryPopup(false);
+    setIsAddingNewCategory(false);
+    setNewCategoryName('');
+  };
+
+  const handleAddNewCategory = () => {
+    setIsAddingNewCategory(true);
+    setTimeout(() => {
+      newCategoryInputRef.current?.focus();
+    }, 0);
+  };
+
+  const loadAllNotes = async () => {
+    const notes = await getNotes();
+    setAllNotes(notes);
+    const categories = await getUniqueCategories(notes);
+    setUniqueCategories(categories);
+  };
+
+  const handleNewCategorySubmit = async () => {
+    if (newCategoryName.trim()) {
+      const categoryName = newCategoryName.trim();
+      await handleCategoryChange(categoryName);
+      // Reload all notes to refresh categories
+      await loadAllNotes();
+    }
+  };
+
+  const handleNewCategoryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNewCategorySubmit();
+    } else if (e.key === 'Escape') {
+      setIsAddingNewCategory(false);
+      setNewCategoryName('');
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryPopupRef.current && !categoryPopupRef.current.contains(event.target as Node)) {
+        setShowCategoryPopup(false);
+      }
+    };
+
+    if (showCategoryPopup) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCategoryPopup]);
+
   if (view === 'history') {
     return <History onBack={() => setView('landing')} onNoteClick={(note) => { setSelectedNote(note); setView('detail'); }} />;
   }
@@ -222,7 +317,7 @@ const App: React.FC = () => {
             <img src={logoIcon} alt="Nomi assistant" />
           </div>
           <p className={`greeting ${screen === 'withNote' ? 'faded' : ''}`}>
-            hi, i'm nomi.<br />i'm here to help<br />organize your thoughts.
+            hi, i'm nomi.
           </p>
         </div>
       </div>
@@ -242,6 +337,14 @@ const App: React.FC = () => {
             >
               <img src={enterIcon} alt="" className="enter-icon" />
               <span>Tap ENTER to restart</span>
+            </p>
+            <p 
+              className="restart-hint"
+              onClick={() => setShowCategoryPopup(true)}
+              style={{ cursor: 'pointer', marginTop: '8px' }}
+              tabIndex={0}
+            >
+              <span>Not in right place? Change Tag</span>
             </p>
           </div>
         ) : (
@@ -282,6 +385,58 @@ const App: React.FC = () => {
           <img src={historyIcon} alt="History" className="history-icon" />
         </div>
       </div>
+      {showCategoryPopup && (
+        <div className="category-popup-overlay">
+          <div className="category-popup" ref={categoryPopupRef}>
+            <div className="category-popup-header">
+              <span>Change Tag</span>
+            </div>
+            <div className="category-popup-content">
+              {uniqueCategories.map((category) => (
+                <div
+                  key={category}
+                  className="tag-dropdown-item"
+                  onClick={() => handleCategoryChange(category)}
+                >
+                  <div className="tag-indicator" style={{ backgroundColor: getCategoryColor(category) }}></div>
+                  <span>{category}</span>
+                </div>
+              ))}
+              <div 
+                className={`tag-dropdown-item add-new-category ${isAddingNewCategory ? 'editing' : ''}`}
+                onClick={!isAddingNewCategory ? handleAddNewCategory : undefined}
+              >
+                {isAddingNewCategory ? (
+                  <>
+                    <div 
+                      className="category-indicator-new" 
+                      style={newCategoryName.trim() ? { 
+                        border: 'none', 
+                        background: getCategoryColor(newCategoryName.trim()) 
+                      } : {}}
+                    ></div>
+                    <input
+                      ref={newCategoryInputRef}
+                      type="text"
+                      className="new-category-input"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={handleNewCategoryKeyDown}
+                      onBlur={handleNewCategorySubmit}
+                      autoFocus
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="category-indicator-new"></div>
+                    <span>Add new</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

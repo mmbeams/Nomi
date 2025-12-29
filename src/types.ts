@@ -5,6 +5,7 @@ export interface Note {
   created_at: number;
   source_url?: string;
   description?: string;
+  is_favorite?: boolean;
 }
 
 export type View = 'landing' | 'history' | 'detail';

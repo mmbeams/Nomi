@@ -1,12 +1,12 @@
 import { CATEGORY_COLORS } from '../types';
 
-// Base color palette that fits the existing scheme
+// High contrast color palette (like reference image: salmon red, orange, medium blue)
 const COLOR_PALETTE = [
-  '#FF4444', // Red
-  '#FF6B6B', // Coral
-  '#4ECDC4', // Teal
-  '#4285F4', // Blue
+  '#FF6B6B', // Salmon Red
   '#FF9500', // Orange
+  '#4285F4', // Medium Blue/Periwinkle
+  '#FF4444', // Red
+  '#4ECDC4', // Teal
   '#9B59B6', // Purple
   '#3498DB', // Light Blue
   '#2ECC71', // Green

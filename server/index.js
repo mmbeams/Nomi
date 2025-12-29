@@ -14,22 +14,52 @@ const GEMINI_API_KEY = 'AIzaSyA4vJauzZrsncbB5wkk--qSbJhrbFtwvNA';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Category system prompt
-const CATEGORY_PROMPT = `You are a categorization assistant. Your job is to categorize short user notes into meaningful categories.
+const CATEGORY_PROMPT = `You are an assistant that categorizes short notes.
 
-Rules:
-1. Create specific, descriptive category names (1-3 words)
-2. Reuse existing categories when they fit well - check if a similar category already exists
-3. Do NOT create too many categories - aim for 8-15 total categories maximum
-4. Categories should be specific enough to be useful but not so specific that you create hundreds of them
-5. Use common, intuitive category names (e.g., "Work", "Personal", "Health", "Shopping", "Travel")
-6. Return ONLY a JSON object with this exact format: {"category": "CategoryName"}
+You must return exactly ONE category.
+
+First, try to choose from the existing categories below, following the priority order strictly:
+
+1. Reminder
+2. Todo
+3. Idea
+4. Work
+5. Life
+6. Reference
+
+If none of the existing categories clearly apply, you may create ONE new category.
+
+Any new category must be:
+- One word
+- Broad and reusable
+- Not a specific task, tool, or sentence
+
+Do NOT return multiple categories.
+Do NOT include explanations.
+
+Rules for creating a new category:
+- Use a noun, not a verb
+- Avoid tools, brand names, or personal names
+- Avoid time-based words
+- Prefer concepts that could apply to many future notes
+
+Good examples: Health, Finance, Design, Learning
+Bad examples: Cursor, GymToday, FixBug, MeetingWithAlex
+
+Output format (JSON only):
+{
+  "category": "Design"
+}
 
 Examples:
-- "Pick up package tonight" → {"category": "Daily Life"}
-- "Fix bug in login" → {"category": "Dev"}
-- "Call dentist" → {"category": "Health"}
-- "New app idea" → {"category": "Ideas"}
-- "Buy groceries" → {"category": "Shopping"}
+- "Tomorrow submit visa form" → {"category": "Reminder"}
+- "Buy protein powder" → {"category": "Todo"}
+- "AI could reduce friction in note capture" → {"category": "Idea"}
+- "Test Chrome extension permissions" → {"category": "Work"}
+- "Feeling anxious this week" → {"category": "Life"}
+- "https://stripe.com/docs" → {"category": "Reference"}
+- "Doctor appointment blood test results" → {"category": "Health"}
+- "Track monthly expenses" → {"category": "Finance"}
 
 Now categorize this note:`;
 
@@ -78,27 +108,14 @@ app.post('/api/categorize', async (req, res) => {
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', text);
       console.error('Parse error:', parseError);
-      // Fallback to "Daily Life" if parsing fails
-      categoryData = { category: 'Daily Life' };
+      // Fallback to "Life" if parsing fails
+      categoryData = { category: 'Life' };
     }
 
-    // Validate category
-    const validCategories = [
-      'Daily Life',
-      'Todos',
-      'Work',
-      'Dev',
-      'Inspo',
-      'Ideas',
-      'Learning',
-      'Health',
-      'Finance',
-      'Projects'
-    ];
-
-    if (!validCategories.includes(categoryData.category)) {
-      console.warn('Invalid category received:', categoryData.category, '- defaulting to Daily Life');
-      categoryData.category = 'Daily Life';
+    // Validate category exists and is not empty
+    if (!categoryData.category || typeof categoryData.category !== 'string' || categoryData.category.trim().length === 0) {
+      console.warn('Invalid category received:', categoryData.category, '- defaulting to Life');
+      categoryData.category = 'Life';
     }
 
     console.log('Returning category:', categoryData.category);
@@ -119,9 +136,9 @@ app.post('/api/categorize', async (req, res) => {
       console.error('QUOTA ERROR: API quota may be exceeded');
     }
     
-    // Fallback to "Daily Life" on error
-    console.log('Falling back to Daily Life due to error');
-    res.json({ category: 'Daily Life' });
+    // Fallback to "Life" on error
+    console.log('Falling back to Life due to error');
+    res.json({ category: 'Life' });
   }
 });
 
