@@ -22,10 +22,8 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deletedNote, setDeletedNote] = useState<Note | null>(null);
   const [showUndoPopup, setShowUndoPopup] = useState(false);
-  const [isAddingNewTag, setIsAddingNewTag] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
-  const newTagInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadNotes();
@@ -49,16 +47,20 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
       }
+      // Don't close dropdown if clicking inside it
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
     };
 
-    if (openMenuId) {
+    if (openMenuId || isDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openMenuId]);
+  }, [openMenuId, isDropdownOpen]);
 
   const loadNotes = async () => {
     const allNotes = await getNotes();
@@ -71,7 +73,8 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   // #region agent log
   useEffect(() => {
     const filteredCount = filteredNotes.length;
-    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:68',message:'Filtered notes computed',data:{selectedCategory,notesCount:notes.length,filteredCount,hasNotes:filteredCount>0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    const dateKeys = Object.keys(groupNotesByDate(filteredNotes));
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:71',message:'Filtered notes computed',data:{selectedCategory,notesCount:notes.length,filteredCount,hasNotes:filteredCount>0,dateKeysCount:dateKeys.length,uniqueCategoriesCount:getUniqueCategories(notes).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
   }, [selectedCategory, notes.length]);
   // #endregion
 
@@ -86,51 +89,6 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   });
 
   const uniqueCategories = getUniqueCategories(notes);
-
-  const handleAddNewTag = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:84',message:'handleAddNewTag called',data:{isDropdownOpen,isAddingNewTag:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    setIsAddingNewTag(true);
-    setIsDropdownOpen(true);
-    setTimeout(() => {
-      newTagInputRef.current?.focus();
-    }, 0);
-  };
-
-  const handleNewTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleNewTagSubmit();
-    } else if (e.key === 'Escape') {
-      setIsAddingNewTag(false);
-      setNewTagName('');
-      setIsDropdownOpen(false);
-    }
-  };
-
-  const handleNewTagSubmit = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:111',message:'handleNewTagSubmit called',data:{newTagName:newTagName.trim(),hasValue:!!newTagName.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    if (newTagName.trim()) {
-      const categoryName = newTagName.trim();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:116',message:'Before state updates',data:{categoryName,currentSelectedCategory:selectedCategory,isDropdownOpen,isAddingNewTag},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      setSelectedCategory(categoryName);
-      setIsDropdownOpen(false);
-      setIsAddingNewTag(false);
-      setNewTagName('');
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:123',message:'After state updates',data:{categoryName,notesCount:notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      await loadNotes();
-      // #region agent log
-      const updatedNotes = await getNotes();
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:127',message:'After loadNotes',data:{notesCount:updatedNotes.length,uniqueCategoriesCount:getUniqueCategories(updatedNotes).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-    }
-  };
 
   const getCategoryColor = (category: string): string => {
     return CATEGORY_COLORS[category] || '#9E9E9E';
@@ -177,7 +135,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
               className="category-selector"
               onClick={() => {
                 // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:147',message:'Category selector clicked',data:{selectedCategory,isDropdownOpen,willToggle:!isDropdownOpen},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:136',message:'Category selector clicked',data:{selectedCategory,isDropdownOpen,willToggle:!isDropdownOpen},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
                 // #endregion
                 setIsDropdownOpen(!isDropdownOpen);
               }}
@@ -189,7 +147,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
               </svg>
             </div>
             {isDropdownOpen && (
-              <div className="category-dropdown">
+              <div className="category-dropdown" ref={dropdownRef}>
                 <div 
                   className="dropdown-item"
                   onClick={() => {
@@ -213,27 +171,6 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                     <span>{category}</span>
                   </div>
                 ))}
-                <div 
-                  className={`dropdown-item add-new-tag ${isAddingNewTag ? 'editing' : ''}`}
-                  onClick={!isAddingNewTag ? handleAddNewTag : undefined}
-                >
-                  <div className="category-indicator new-tag-indicator"></div>
-                  {isAddingNewTag ? (
-                    <input
-                      ref={newTagInputRef}
-                      type="text"
-                      className="new-tag-input-inline"
-                      placeholder="add new page"
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                      onKeyDown={handleNewTagKeyDown}
-                      onBlur={handleNewTagSubmit}
-                      autoFocus
-                    />
-                  ) : (
-                    <span>new page</span>
-                  )}
-                </div>
               </div>
             )}
           </div>

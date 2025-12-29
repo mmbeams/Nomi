@@ -29,11 +29,8 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [description, setDescription] = useState<string>(note.description || '');
   const [allNotes, setAllNotes] = useState<Note[]>([]);
-  const [isAddingNewTag, setIsAddingNewTag] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
   const [deletedNote, setDeletedNote] = useState<Note | null>(null);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
-  const newTagInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAllNotes();
@@ -100,36 +97,9 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
     await updateNote(updatedNote);
     setCurrentNote(updatedNote);
     setIsTagDropdownOpen(false);
-    setIsAddingNewTag(false);
-    setNewTagName('');
     loadAllNotes(); // Reload to get updated categories
   };
 
-  const handleAddNewTag = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DetailView.tsx:88',message:'handleAddNewTag called',data:{isTagDropdownOpen,isAddingNewTag:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    setIsAddingNewTag(true);
-    setTimeout(() => {
-      newTagInputRef.current?.focus();
-    }, 0);
-  };
-
-  const handleNewTagSubmit = async () => {
-    if (newTagName.trim()) {
-      const tagName = newTagName.trim();
-      await handleTagChange(tagName);
-    }
-  };
-
-  const handleNewTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleNewTagSubmit();
-    } else if (e.key === 'Escape') {
-      setIsAddingNewTag(false);
-      setNewTagName('');
-    }
-  };
 
   const handleDescriptionSave = async () => {
     const updatedNote = { ...currentNote, description };
@@ -201,27 +171,6 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
                       <span>{category}</span>
                     </div>
                   ))}
-                  <div 
-                    className={`tag-dropdown-item add-new-tag ${isAddingNewTag ? 'editing' : ''}`}
-                    onClick={!isAddingNewTag ? handleAddNewTag : undefined}
-                  >
-                    <div className="tag-indicator new-tag-indicator"></div>
-                    {isAddingNewTag ? (
-                      <input
-                        ref={newTagInputRef}
-                        type="text"
-                        className="new-tag-input-inline"
-                        placeholder="add new page"
-                        value={newTagName}
-                        onChange={(e) => setNewTagName(e.target.value)}
-                        onKeyDown={handleNewTagKeyDown}
-                        onBlur={handleNewTagSubmit}
-                        autoFocus
-                      />
-                    ) : (
-                      <span>new page</span>
-                    )}
-                  </div>
                 </div>
               )}
             </div>
