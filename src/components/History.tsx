@@ -68,6 +68,12 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   const filteredNotes = selectedCategory === 'Recent' 
     ? notes 
     : notes.filter(note => note.category === selectedCategory);
+  // #region agent log
+  useEffect(() => {
+    const filteredCount = filteredNotes.length;
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:68',message:'Filtered notes computed',data:{selectedCategory,notesCount:notes.length,filteredCount,hasNotes:filteredCount>0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+  }, [selectedCategory, notes.length]);
+  // #endregion
 
   const groupedNotes = groupNotesByDate(filteredNotes);
   const dateKeys = Object.keys(groupedNotes).sort((a, b) => {
@@ -104,23 +110,24 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
 
   const handleNewTagSubmit = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:105',message:'handleNewTagSubmit called',data:{newTagName:newTagName.trim(),hasValue:!!newTagName.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:111',message:'handleNewTagSubmit called',data:{newTagName:newTagName.trim(),hasValue:!!newTagName.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
     if (newTagName.trim()) {
       const categoryName = newTagName.trim();
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:109',message:'Before state updates',data:{categoryName,currentSelectedCategory:selectedCategory,isDropdownOpen,isAddingNewTag},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:116',message:'Before state updates',data:{categoryName,currentSelectedCategory:selectedCategory,isDropdownOpen,isAddingNewTag},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
       setSelectedCategory(categoryName);
       setIsDropdownOpen(false);
       setIsAddingNewTag(false);
       setNewTagName('');
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:114',message:'After state updates',data:{categoryName,notesCount:notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:123',message:'After state updates',data:{categoryName,notesCount:notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
       // #endregion
       await loadNotes();
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:117',message:'After loadNotes',data:{notesCount:notes.length,uniqueCategories:getUniqueCategories(notes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      const updatedNotes = await getNotes();
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:127',message:'After loadNotes',data:{notesCount:updatedNotes.length,uniqueCategoriesCount:getUniqueCategories(updatedNotes).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
     }
   };
@@ -216,6 +223,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                       ref={newTagInputRef}
                       type="text"
                       className="new-tag-input-inline"
+                      placeholder="add new page"
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       onKeyDown={handleNewTagKeyDown}
@@ -223,7 +231,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                       autoFocus
                     />
                   ) : (
-                    <span>new tag</span>
+                    <span>new page</span>
                   )}
                 </div>
               </div>

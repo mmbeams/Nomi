@@ -211,6 +211,7 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
                         ref={newTagInputRef}
                         type="text"
                         className="new-tag-input-inline"
+                        placeholder="add new page"
                         value={newTagName}
                         onChange={(e) => setNewTagName(e.target.value)}
                         onKeyDown={handleNewTagKeyDown}
@@ -218,7 +219,7 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
                         autoFocus
                       />
                     ) : (
-                      <span>new tag</span>
+                      <span>new page</span>
                     )}
                   </div>
                 </div>
