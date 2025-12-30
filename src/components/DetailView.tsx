@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Note } from '../types';
-import { updateNote, deleteNote, getNotes, toggleFavorite, renameCategory, deleteCategory, restoreCategoryNotes, getUniqueCategories as getUniqueCategoriesUtil, addEmptyCategory } from '../utils/storage';
+import { updateNote, deleteNote, getNotes, toggleFavorite, renameCategory, deleteCategory, restoreCategoryNotes, getUniqueCategories as getUniqueCategoriesUtil, addEmptyCategory, removeEmptyCategory } from '../utils/storage';
 import { getCategoryColor } from '../utils/colorGenerator';
-import logoIcon from '../assets/logo.svg';
+import AnimatedLogo from './AnimatedLogo';
 import backIcon from '../assets/back.svg';
 import tagIcon from '../assets/tag.svg';
 import dateIcon from '../assets/date.svg';
@@ -40,9 +40,13 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
   const [hoveredActionIcon, setHoveredActionIcon] = useState<string | null>(null);
   const [deletedCategoryNotes, setDeletedCategoryNotes] = useState<Note[]>([]);
   const [showUndoPopup, setShowUndoPopup] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const newCategoryInputRef = useRef<HTMLInputElement>(null);
   const editingCategoryInputRef = useRef<HTMLInputElement>(null);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAllNotes();
@@ -177,8 +181,13 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
   };
 
   const handleDeleteCategory = async (category: string, e: React.MouseEvent) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DetailView.tsx:183',message:'handleDeleteCategory called',data:{category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     e.stopPropagation();
     const deletedNotes = await deleteCategory(category);
+    // Remove from empty categories if it was there
+    await removeEmptyCategory(category);
     setDeletedCategoryNotes(deletedNotes);
     setShowUndoPopup(true);
     setIsTagDropdownOpen(false);
@@ -189,17 +198,35 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
       onBack();
     }
     
+    // Clear any existing timeout
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    
     // Auto-hide after 5 seconds
-    setTimeout(() => {
+    undoTimeoutRef.current = setTimeout(() => {
       setShowUndoPopup(false);
       setDeletedCategoryNotes([]);
+      undoTimeoutRef.current = null;
     }, 5000);
   };
 
   const handleUndoCategoryDelete = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DetailView.tsx:202',message:'handleUndoCategoryDelete called',data:{deletedCategoryNotesCount:deletedCategoryNotes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     if (deletedCategoryNotes.length > 0) {
-      await restoreCategoryNotes(deletedCategoryNotes);
+      // Clear timeout immediately
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+        undoTimeoutRef.current = null;
+      }
+      
+      // Hide popup immediately
       setShowUndoPopup(false);
+      
+      await restoreCategoryNotes(deletedCategoryNotes);
       setDeletedCategoryNotes([]);
       loadAllNotes();
     }
@@ -243,16 +270,68 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
     }
   };
 
+  const handleTitleClick = () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DetailView.tsx:245',message:'Title clicked, entering edit mode',data:{currentTitle:currentNote.content},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    setIsEditingTitle(true);
+    setEditingTitle(currentNote.content);
+    setTimeout(() => {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }, 0);
+  };
+
+  const handleTitleSave = async () => {
+    if (editingTitle.trim() && editingTitle.trim() !== currentNote.content) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DetailView.tsx:258',message:'Saving title',data:{oldTitle:currentNote.content,newTitle:editingTitle.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      const updatedNote = { ...currentNote, content: editingTitle.trim() };
+      await updateNote(updatedNote);
+      setCurrentNote(updatedNote);
+    }
+    setIsEditingTitle(false);
+    setEditingTitle('');
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+      setEditingTitle('');
+    }
+  };
+
   return (
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <div className="assistant-icon" onClick={onBack} style={{ cursor: 'pointer' }}>
-            <img src={logoIcon} alt="Nomi assistant" />
-          </div>
+          <AnimatedLogo onClick={onBack} />
           <div className="detail-header-content">
             <img src={backIcon} alt="Back" className="back-icon" onClick={onBack} style={{ cursor: 'pointer' }} />
-            <span className="detail-title">{currentNote.content}</span>
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type="text"
+                className="detail-title-input"
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                autoFocus
+              />
+            ) : (
+              <span 
+                className="detail-title" 
+                onClick={handleTitleClick}
+                style={{ cursor: 'text' }}
+              >
+                {currentNote.content}
+              </span>
+            )}
             <div className="detail-actions">
               <img 
                 src={favIcon} 
@@ -298,7 +377,7 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
                       }}
                     >
                       <div className="category-item-content">
-                        <div className="tag-indicator" style={{ backgroundColor: editingCategory === category && editingCategoryColor ? editingCategoryColor : getCategoryColor(category) }}></div>
+                        <div className="tag-indicator category-indicator" style={{ backgroundColor: editingCategory === category && editingCategoryColor ? editingCategoryColor : getCategoryColor(category) }}></div>
                         {editingCategory === category ? (
                           <input
                             ref={editingCategoryInputRef}
@@ -340,6 +419,7 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
                   <div 
                     className={`tag-dropdown-item add-new-category ${isAddingNewCategory ? 'editing' : ''}`}
                     onClick={!isAddingNewCategory ? handleAddNewCategory : undefined}
+                    style={{ minWidth: '200px' }}
                   >
                     {isAddingNewCategory ? (
                       <>
@@ -427,7 +507,7 @@ const DetailView: React.FC<DetailViewProps> = ({ note, onBack }) => {
       </div>
       {showUndoPopup && (
         <div className="undo-popup">
-          <span className="undo-text">{deletedCategoryNotes.length > 0 ? 'Category deleted' : 'Deleted'}</span>
+          <span className="undo-text">Deleted</span>
           <button className="undo-button" onClick={handleUndoCategoryDelete}>Undo</button>
         </div>
       )}

@@ -27,8 +27,15 @@ const COLOR_PALETTE = [
  * Returns a color from the palette that fits the existing color scheme
  */
 export const generateTagColor = (tagName: string): string => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorGenerator.ts:29',message:'generateTagColor called',data:{tagName,hasPredefinedColor:!!CATEGORY_COLORS[tagName]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  
   // Check if tag already has a color in CATEGORY_COLORS
   if (CATEGORY_COLORS[tagName]) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorGenerator.ts:33',message:'Using predefined color',data:{tagName,color:CATEGORY_COLORS[tagName]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return CATEGORY_COLORS[tagName];
   }
 
@@ -42,14 +49,27 @@ export const generateTagColor = (tagName: string): string => {
 
   // Use absolute value and modulo to get index
   const index = Math.abs(hash) % COLOR_PALETTE.length;
-  return COLOR_PALETTE[index];
+  const generatedColor = COLOR_PALETTE[index];
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorGenerator.ts:48',message:'Generated color from hash',data:{tagName,hash,index,generatedColor},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  
+  return generatedColor;
 };
 
 /**
  * Get color for a category, using generated color if not in predefined list
  */
 export const getCategoryColor = (category: string): string => {
-  return CATEGORY_COLORS[category] || generateTagColor(category);
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorGenerator.ts:54',message:'getCategoryColor called',data:{category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  const color = CATEGORY_COLORS[category] || generateTagColor(category);
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorGenerator.ts:57',message:'getCategoryColor returning',data:{category,color},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  return color;
 };
 
 

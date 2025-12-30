@@ -3,7 +3,7 @@ import { Note } from '../types';
 import { getNotes, groupNotesByDate, getUniqueCategories, deleteNote, restoreNote, toggleFavorite, renameCategory, deleteCategory, restoreCategoryNotes, addEmptyCategory, removeEmptyCategory, saveNote } from '../utils/storage';
 import { getCategoryColor } from '../utils/colorGenerator';
 import { BACKEND_URL } from '../types';
-import logoIcon from '../assets/logo.svg';
+import AnimatedLogo from './AnimatedLogo';
 import detailIcon from '../assets/detail.svg';
 import favIcon from '../assets/fav.svg';
 import addIcon from '../assets/add.svg';
@@ -38,9 +38,13 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [hoveredActionIcon, setHoveredActionIcon] = useState<string | null>(null);
   const [deletedCategoryNotes, setDeletedCategoryNotes] = useState<Note[]>([]);
+  const [isHoveringAddIcon, setIsHoveringAddIcon] = useState(false);
+  const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const newCategoryInputRef = useRef<HTMLInputElement>(null);
   const editingCategoryInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const categorySelectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadNotes();
@@ -75,6 +79,34 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
     };
   }, [openMenuId]);
 
+  useEffect(() => {
+    const handleClickOutsideDropdown = (event: MouseEvent) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:79',message:'Click outside dropdown check',data:{isDropdownOpen,hasDropdownRef:!!categoryDropdownRef.current,hasSelectorRef:!!categorySelectorRef.current,target:event.target?.constructor?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      if (
+        isDropdownOpen &&
+        categoryDropdownRef.current &&
+        categorySelectorRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node) &&
+        !categorySelectorRef.current.contains(event.target as Node)
+      ) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:88',message:'Closing dropdown from outside click',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutsideDropdown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideDropdown);
+    };
+  }, [isDropdownOpen]);
+
   const loadNotes = async () => {
     const allNotes = await getNotes();
     setNotes(allNotes);
@@ -100,6 +132,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   });
 
   const isCategoryEmpty = selectedCategory !== 'All' && selectedCategory !== 'Fav' && filteredNotes.length === 0;
+  const isFavEmpty = selectedCategory === 'Fav' && filteredNotes.length === 0;
 
   const handleDelete = async (note: Note) => {
     await deleteNote(note.id);
@@ -108,17 +141,35 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
     setOpenMenuId(null);
     loadNotes();
     
+    // Clear any existing timeout
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    
     // Auto-hide after 5 seconds
-    setTimeout(() => {
+    undoTimeoutRef.current = setTimeout(() => {
       setShowUndoPopup(false);
       setDeletedNote(null);
+      undoTimeoutRef.current = null;
     }, 5000);
   };
 
   const handleUndo = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:120',message:'handleUndo called',data:{hasDeletedNote:!!deletedNote,hasDeletedCategoryNotes:deletedCategoryNotes.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    // Clear timeout immediately
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+      undoTimeoutRef.current = null;
+    }
+    
+    // Hide popup immediately
+    setShowUndoPopup(false);
+    
     if (deletedNote) {
       await restoreNote(deletedNote);
-      setShowUndoPopup(false);
       setDeletedNote(null);
       loadNotes();
     } else if (deletedCategoryNotes.length > 0) {
@@ -141,8 +192,17 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   };
 
   const handleNewCategorySubmit = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:143',message:'handleNewCategorySubmit called',data:{newCategoryName:newCategoryName.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (newCategoryName.trim()) {
       const categoryName = newCategoryName.trim();
+      
+      // Generate color for the new category to ensure consistency
+      const categoryColor = getCategoryColor(categoryName);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:149',message:'Generated color for new category',data:{categoryName,categoryColor},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       
       // Store as empty category so it shows in dropdowns
       await addEmptyCategory(categoryName);
@@ -207,24 +267,52 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
   };
 
   const handleDeleteCategory = async (category: string, e: React.MouseEvent) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:239',message:'handleDeleteCategory called',data:{category,selectedCategory},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     e.stopPropagation();
     const deletedNotes = await deleteCategory(category);
+    // Remove from empty categories if it was there
+    await removeEmptyCategory(category);
     setDeletedCategoryNotes(deletedNotes);
     setShowUndoPopup(true);
     setIsDropdownOpen(false);
+    
+    // If deleting the currently selected category, redirect to "All"
+    if (selectedCategory === category) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:252',message:'Redirecting to All after category delete',data:{deletedCategory:category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      setSelectedCategory('All');
+    }
+    
     loadNotes();
     
+    // Clear any existing timeout
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    
     // Auto-hide after 5 seconds
-    setTimeout(() => {
+    undoTimeoutRef.current = setTimeout(() => {
       setShowUndoPopup(false);
       setDeletedCategoryNotes([]);
+      undoTimeoutRef.current = null;
     }, 5000);
   };
 
   const handleUndoCategoryDelete = async () => {
     if (deletedCategoryNotes.length > 0) {
-      await restoreCategoryNotes(deletedCategoryNotes);
+      // Clear timeout immediately
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+        undoTimeoutRef.current = null;
+      }
+      
+      // Hide popup immediately
       setShowUndoPopup(false);
+      
+      await restoreCategoryNotes(deletedCategoryNotes);
       setDeletedCategoryNotes([]);
       loadNotes();
     }
@@ -302,6 +390,9 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
       setNewNoteText('');
       setIsAddingNote(false);
       loadNotes();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:313',message:'Note saved successfully',data:{noteId:note.id,content:note.content,category:note.category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
     }
   };
 
@@ -314,16 +405,23 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
     }
   };
 
+  const handleNewNoteBlur = () => {
+    if (newNoteText.trim()) {
+      handleNewNoteSave();
+    } else {
+      setIsAddingNote(false);
+    }
+  };
+
   return (
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <div className="assistant-icon" onClick={onBack} style={{ cursor: 'pointer' }}>
-            <img src={logoIcon} alt="Nomi assistant" />
-          </div>
+          <AnimatedLogo onClick={onBack} />
           <div className="history-header-content">
             <div className="category-header">
               <div 
+                ref={categorySelectorRef}
                 className="category-selector"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
@@ -334,7 +432,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                 </svg>
               </div>
               {isDropdownOpen && (
-                <div className="category-dropdown">
+                <div ref={categoryDropdownRef} className="category-dropdown">
                   <div 
                     className="dropdown-item"
                     onClick={() => {
@@ -401,6 +499,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                   <div 
                     className={`dropdown-item add-new-category ${isAddingNewCategory ? 'editing' : ''}`}
                     onClick={!isAddingNewCategory ? handleAddNewCategory : undefined}
+                    style={{ minWidth: '200px' }}
                   >
                     {isAddingNewCategory ? (
                       <>
@@ -436,13 +535,18 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
               <img 
                 src={addIcon} 
                 alt="Add" 
-                className="history-add-icon"
+                className={`history-add-icon ${isHoveringAddIcon ? 'hovered' : ''} ${isAddingNote ? 'adding' : ''}`}
                 onClick={() => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:448',message:'Add icon clicked',data:{isAddingNote},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                  // #endregion
                   setIsAddingNote(true);
                   setTimeout(() => {
                     newNoteInputRef.current?.focus();
                   }, 0);
                 }}
+                onMouseEnter={() => setIsHoveringAddIcon(true)}
+                onMouseLeave={() => setIsHoveringAddIcon(false)}
                 style={{ cursor: 'pointer' }}
               />
               <img 
@@ -468,55 +572,51 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
       <div className="history-content">
         {isAddingNote && (
           <div className="date-section">
-            <div className="inline-note-input-wrapper">
-              <div className="inline-note-category-indicator" style={{ 
-                border: '1.4px solid #000000',
-                background: 'transparent'
-              }}></div>
-              <input
-                ref={newNoteInputRef}
-                type="text"
-                className="inline-note-input"
-                placeholder="Add new"
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                onKeyDown={handleNewNoteKeyDown}
-                onBlur={() => {
-                  if (!newNoteText.trim()) {
-                    setIsAddingNote(false);
-                  }
-                }}
-                autoFocus
-              />
-              <p className="inline-save-hint">
-                <img src={enterIcon} alt="" className="enter-icon" />
-                <span>Tap ENTER to save</span>
-              </p>
+            <div className="notes-list">
+              <div className={`note-card adding-note-card ${newNoteText.trim() ? 'typing' : ''}`}>
+                <div 
+                  className="note-category-indicator adding-note-indicator" 
+                  style={{ 
+                    border: '1.4px solid #000000',
+                    background: 'transparent'
+                  }}
+                ></div>
+                <input
+                  ref={newNoteInputRef}
+                  type="text"
+                  className={`note-content adding-note-input ${newNoteText.trim() ? 'typing' : ''}`}
+                  placeholder="add new"
+                  value={newNoteText}
+                  onChange={(e) => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:485',message:'Note input changed',data:{value:e.target.value,hasValue:!!e.target.value.trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                    // #endregion
+                    setNewNoteText(e.target.value);
+                  }}
+                  onKeyDown={handleNewNoteKeyDown}
+                  onBlur={handleNewNoteBlur}
+                  autoFocus
+                />
+                <img src={detailIcon} alt="Detail" className="note-detail-icon" style={{ opacity: 0 }} />
+              </div>
             </div>
           </div>
         )}
         {isCategoryEmpty && !isAddingNote && (
           <div className="date-section">
-            <div className="empty-category-input-wrapper">
-              <div className="empty-category-indicator" style={{ 
-                backgroundColor: getCategoryColor(selectedCategory)
-              }}></div>
-              <input
-                type="text"
-                className="empty-category-input"
-                placeholder="Add new notes"
-                onFocus={() => setIsAddingNote(true)}
-                onClick={() => {
-                  setIsAddingNote(true);
-                  setTimeout(() => {
-                    newNoteInputRef.current?.focus();
-                  }, 0);
-                }}
-              />
+            <div className="empty-category-message">
+              <p>Start creating notes :)</p>
             </div>
           </div>
         )}
-        {dateKeys.length === 0 && !isCategoryEmpty && !isAddingNote ? (
+        {isFavEmpty && !isAddingNote && (
+          <div className="date-section">
+            <div className="empty-category-message">
+              <p>Your favourite notes will show in here.</p>
+            </div>
+          </div>
+        )}
+        {dateKeys.length === 0 && !isCategoryEmpty && !isFavEmpty && !isAddingNote ? (
           <div className="empty-history">
             <p>No notes yet. Start capturing your thoughts!</p>
           </div>
@@ -525,7 +625,11 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
             <div key={dateKey} className="date-section">
               <h3 className="date-header">{dateKey}</h3>
               <div className="notes-list">
-                {groupedNotes[dateKey].map((note) => (
+                {groupedNotes[dateKey].map((note) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:528',message:'Rendering note card',data:{noteId:note.id,noteCategory:note.category,isFavorite:note.is_favorite,hoveredNoteId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  return (
                   <div 
                     key={note.id} 
                     className="note-card"
@@ -564,12 +668,19 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
                     ) : null}
                     <div 
                       className="note-category-indicator" 
-                      style={{ backgroundColor: getCategoryColor(note.category) }}
+                      style={{ backgroundColor: (() => {
+                        const color = getCategoryColor(note.category);
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'History.tsx:567',message:'Setting note category color',data:{noteId:note.id,category:note.category,color},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                        // #endregion
+                        return color;
+                      })() }}
                     ></div>
                     <span className="note-content">{note.content}</span>
                     <img src={detailIcon} alt="Detail" className="note-detail-icon" onClick={(e) => { e.stopPropagation(); onNoteClick(note); }} />
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))
@@ -577,7 +688,7 @@ const History: React.FC<HistoryProps> = ({ onBack, onNoteClick }) => {
       </div>
       {showUndoPopup && (
         <div className="undo-popup">
-          <span className="undo-text">{deletedCategoryNotes.length > 0 ? 'Category deleted' : 'Deleted'}</span>
+          <span className="undo-text">Deleted</span>
           <button className="undo-button" onClick={handleUndo}>Undo</button>
         </div>
       )}

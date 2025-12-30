@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import logoIcon from './assets/logo.svg';
+import AnimatedLogo from './components/AnimatedLogo';
 import historyIcon from './assets/history.svg';
 import calendarIcon from './assets/calendar.svg';
 import enterIcon from './assets/enter.svg';
@@ -313,9 +313,7 @@ const App: React.FC = () => {
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <div className="assistant-icon" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>
-            <img src={logoIcon} alt="Nomi assistant" />
-          </div>
+          <AnimatedLogo onClick={() => setView('landing')} />
           <p className={`greeting ${screen === 'withNote' ? 'faded' : ''}`}>
             hi, i'm nomi.
           </p>
@@ -353,7 +351,7 @@ const App: React.FC = () => {
               ref={inputRef}
               type="text"
               className="note-input"
-              placeholder="Write down anything on mind…"
+              placeholder="tell me anything on mind…"
               value={noteText}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
