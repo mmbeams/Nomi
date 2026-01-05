@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomi - AI Sticky Notes for Chrome</title>
+    <link rel="icon" type="image/png" href="src/icons/icon16.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            background: #FFFFFF;
+            color: #000000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            cursor: none;
+        }
+
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #000000;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s ease, height 0.2s ease;
+        }
+
+        .custom-cursor.hover {
+            width: 20px;
+            height: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 80px 20px 40px;
+        }
+
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 120px;
+        }
+
+        .logo-container {
+            margin-bottom: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-svg {
+            width: 200px;
+            height: auto;
+            cursor: default;
+        }
+
+        .hero-headline {
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            color: #000000;
+            letter-spacing: -0.02em;
+        }
+
+        .subheadline {
+            font-size: 20px;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #000000;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #000000;
+            color: #FFFFFF;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: #333333;
+            transform: translateY(-1px);
+        }
+
+        .cta-button:active {
+            transform: translateY(0);
+        }
+
+        .cta-button-outline {
+            display: inline-block;
+            padding: 14px 32px;
+            background: transparent;
+            color: #000000;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            border: 1.5px solid #000000;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+        }
+
+        .cta-button-outline:hover {
+            background: #000000;
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+
+        .cta-button-outline:active {
+            transform: translateY(0);
+        }
+
+        .chrome-badge {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .chrome-badge img {
+            height: 40px;
+            width: auto;
+        }
+
+        .feature-section {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto 120px;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .feature-video {
+            width: 100%;
+            max-width: 1400px;
+            height: auto;
+            min-height: 700px;
+            margin-bottom: 24px;
+            background: #f5f5f5;
+            display: block;
+        }
+
+        .feature-text {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .feature-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #000000;
+        }
+
+        .feature-description {
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #000000;
+        }
+
+        .gallery {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 120px;
+        }
+
+        .gallery-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 80px;
+            gap: 60px;
+        }
+
+        .gallery-item.reverse {
+            flex-direction: row-reverse;
+        }
+
+        .gallery-video {
+            flex: 1;
+            max-width: 500px;
+            height: auto;
+            min-height: 300px;
+            background: #f5f5f5;
+            display: block;
+        }
+
+        .gallery-text {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .gallery-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #000000;
+        }
+
+        .gallery-description {
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #000000;
+        }
+
+        .footer {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-top: 1px solid #E5E5E5;
+        }
+
+        .footer-left {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-left-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-icon {
+            width: 48px;
+            height: 48px;
+        }
+
+        .footer-link {
+            color: #000000;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 400;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-link:hover {
+            opacity: 0.6;
+        }
+
+        .footer-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .email-subscription {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .email-subscription-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #000000;
+        }
+
+        .email-form {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #D0D0D0;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .email-input:focus {
+            border-color: #000000;
+        }
+
+        .email-input::placeholder {
+            color: #999999;
+        }
+
+        .email-submit {
+            padding: 12px 20px;
+            background: #000000;
+            border: 1px solid #000000;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .email-submit:hover {
+            background: #333333;
+        }
+
+        .email-submit svg {
+            width: 20px;
+            height: 20px;
+            stroke: #FFFFFF;
+            fill: none;
+        }
+
+        .email-submit svg path {
+            stroke: #FFFFFF;
+        }
+
+        @media (max-width: 768px) {
+            .hero-headline {
+                font-size: 48px;
+            }
+
+            .subheadline {
+                font-size: 18px;
+            }
+
+            .logo-svg {
+                width: 150px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .gallery-item {
+                flex-direction: column !important;
+                gap: 24px;
+            }
+
+            .gallery-item.reverse {
+                flex-direction: column !important;
+            }
+
+            .gallery-video,
+            .gallery-text {
+                max-width: 100%;
+            }
+
+            .footer {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .footer-right {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-section">
+            <div class="logo-container">
+                <svg class="logo-svg" width="200" height="155" viewBox="0 0 75 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer frame -->
+                    <path id="frame" d="M72.48 2.24H2.23999V55.04H72.48V2.24Z" stroke="black" stroke-width="4.48"/>
+                    <!-- Left eye - rectangle with dynamic rounded corners -->
+                    <path id="leftEye" d="M12.5599 32.48H24.0799C27.6146 32.48 30.4799 35.3454 30.4799 38.88V45.6H12.5599V32.48Z" fill="black"/>
+                    <!-- Right eye - rectangle with dynamic rounded corners -->
+                    <path id="rightEye" d="M41.2 32.48H52.72C56.2546 32.48 59.12 35.3454 59.12 38.88V45.6H41.2V32.48Z" fill="black"/>
+                    <!-- Left smile - follows cursor direction -->
+                    <path id="leftSmile" d="M10 28.5831C13.52 25.9697 22.544 22.3111 30.48 28.5831" stroke="black" stroke-width="4.48" stroke-linecap="round"/>
+                    <!-- Right smile - follows cursor direction -->
+                    <path id="rightSmile" d="M39.9199 28.5832C43.4399 25.9698 52.4639 22.3112 60.3999 28.5832" stroke="black" stroke-width="4.48" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <h1 class="hero-headline">Write it down.<br>Stay focused.</h1>
+            
+            <p class="subheadline">Nomi is an AI sticky note for capturing ideas, thoughts, and to-dos the moment they appear, without screen switching or distraction.</p>
+            
+            <div class="cta-buttons">
+                <a href="https://chromewebstore.google.com/detail/nomi/fjmakgfpmfgogocfjmleacmlklomiand" class="cta-button" target="_blank" rel="noopener noreferrer">Get Nomi</a>
+                <a href="https://mmbeams.github.io/nomi/index.html" class="cta-button-outline" target="_blank" rel="noopener noreferrer">Documentation</a>
+            </div>
+            
+            <div class="chrome-badge">
+                <img src="assets/chrome.png" alt="Available on Chrome Web Store">
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <video class="feature-video" autoplay loop muted playsinline>
+                <source src="assets/instantcapture.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="feature-text">
+                <h2 class="feature-title">Instant Note Capture</h2>
+                <p class="feature-description">Click the extension and start typing immediately.<br>No tab switching. No onboarding. No friction.</p>
+            </div>
+        </div>
+
+        <div class="gallery">
+            <div class="gallery-item">
+                <video class="gallery-video" autoplay loop muted playsinline>
+                    <source src="assets/AIcategorize.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="gallery-text">
+                    <h3 class="gallery-title">Smart Categories</h3>
+                    <p class="gallery-description">Notes are automatically categorized by AI.<br>Users can easily rename, add, or remove categories to match their mental model.</p>
+                </div>
+            </div>
+
+            <div class="gallery-item reverse">
+                <video class="gallery-video" autoplay loop muted playsinline>
+                    <source src="assets/addtocalendar.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="gallery-text">
+                    <h3 class="gallery-title">Add to Google Calendar</h3>
+                    <p class="gallery-description">Turn notes into todos and add them to Google Calendar in a single click.</p>
+                </div>
+            </div>
+
+            <div class="gallery-item">
+                <video class="gallery-video" autoplay loop muted playsinline>
+                    <source src="assets/bookmark.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="gallery-text">
+                    <h3 class="gallery-title">Context as a Bookmark</h3>
+                    <p class="gallery-description">Each note saves the URL of the page where it was created, allowing users to revisit the original context later.</p>
+                </div>
+            </div>
+
+            <div class="gallery-item reverse">
+                <video class="gallery-video" autoplay loop muted playsinline>
+                    <source src="assets/history.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="gallery-text">
+                    <h3 class="gallery-title">History & Editing</h3>
+                    <p class="gallery-description">View and manage past notes—edit content, update categories, add details, favorite important items, or delete what's no longer needed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="email-subscription">
+        <p class="email-subscription-title">Subscribe for updates</p>
+        <form class="email-form" id="emailForm" onsubmit="handleEmailSubmit(event)">
+            <input type="email" class="email-input" placeholder="Enter your email" required>
+            <button type="submit" class="email-submit">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <div class="custom-cursor" id="customCursor"></div>
+
+    <footer class="footer">
+        <div class="footer-left">
+            <div class="footer-left-row">
+                <img src="assets/logo.svg" alt="Nomi" class="footer-icon">
+            </div>
+        </div>
+        <div class="footer-right">
+            <a href="privacy.html" class="footer-link">Privacy Policy</a>
+        </div>
+    </footer>
+
+    <script>
+        // Handle email form submission
+        function handleEmailSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const emailInput = form.querySelector('.email-input');
+            const email = emailInput.value.trim();
+            
+            if (email) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:handleEmailSubmit',message:'Email form submitted',data:{email:email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+                
+                // Send email to backend
+                fetch('http://127.0.0.1:7242/api/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:handleEmailSubmit',message:'Email subscription success',data:{email:email,response:data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion
+                    emailInput.value = '';
+                    alert('Thank you for subscribing!');
+                })
+                .catch(error => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:handleEmailSubmit',message:'Email subscription error',data:{email:email,error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion
+                    console.error('Error subscribing email:', error);
+                    alert('There was an error. Please try again later.');
+                });
+            }
+        }
+
+        // Custom cursor
+        (function() {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                let mouseX = 0;
+                let mouseY = 0;
+                let cursorX = 0;
+                let cursorY = 0;
+
+                document.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                });
+
+                // Add hover effect for links and buttons
+                const interactiveElements = document.querySelectorAll('a, button, .cta-button, .cta-button-outline, .email-input, .email-submit');
+                interactiveElements.forEach(element => {
+                    element.addEventListener('mouseenter', () => {
+                        cursor.classList.add('hover');
+                    });
+                    element.addEventListener('mouseleave', () => {
+                        cursor.classList.remove('hover');
+                    });
+                });
+
+                function animateCursor() {
+                    cursorX += (mouseX - cursorX) * 0.1;
+                    cursorY += (mouseY - cursorY) * 0.1;
+                    cursor.style.left = cursorX + 'px';
+                    cursor.style.top = cursorY + 'px';
+                    requestAnimationFrame(animateCursor);
+                }
+                animateCursor();
+            }
+        })();
+
+        (function() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:script:init',message:'Page loaded, starting video debug',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+
+            // Debug video loading
+            const videoDebug = () => {
+                // Check browser video format support
+                const videoEl = document.createElement('video');
+                const canPlayMov = videoEl.canPlayType('video/quicktime');
+                const canPlayMp4 = videoEl.canPlayType('video/mp4');
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Browser video format support',data:{canPlayMov:canPlayMov,canPlayMp4:canPlayMp4,userAgent:navigator.userAgent},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+                
+                const videos = document.querySelectorAll('video');
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video elements found',data:{videoCount:videos.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+                
+                videos.forEach((video, index) => {
+                    const source = video.querySelector('source');
+                    const src = source ? source.getAttribute('src') : 'no source';
+                    const videoPath = src;
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video element details',data:{index:index,src:src,readyState:video.readyState,networkState:video.networkState,width:video.offsetWidth,height:video.offsetHeight},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                    // #endregion
+                    
+                    // Check if file exists
+                    fetch(videoPath, { method: 'HEAD' })
+                        .then(response => {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video file fetch result',data:{index:index,src:src,status:response.status,statusText:response.statusText,contentType:response.headers.get('content-type')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                            // #endregion
+                        })
+                        .catch(error => {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video file fetch error',data:{index:index,src:src,error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                            // #endregion
+                        });
+                    
+                    video.addEventListener('error', (e) => {
+                        const errorInfo = video.error ? {
+                            code: video.error.code,
+                            message: video.error.message
+                        } : { code: 'unknown', message: 'unknown' };
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video error event',data:{index:index,src:src,error:errorInfo.message,code:errorInfo.code,readyState:video.readyState,networkState:video.networkState},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                        // #endregion
+                        
+                        // Show error message on video element
+                        if (video.error && video.error.code === 4) {
+                            video.style.border = '2px solid red';
+                            video.title = 'Video format not supported. Please convert .mov to .mp4';
+                        }
+                    });
+                    
+                    video.addEventListener('loadedmetadata', () => {
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video metadata loaded',data:{index:index,src:src,videoWidth:video.videoWidth,videoHeight:video.videoHeight},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                        // #endregion
+                    });
+                    
+                    video.addEventListener('canplay', () => {
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/54951e98-2bff-4fbd-949e-e65bbe5ee424',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:videoDebug',message:'Video can play',data:{index:index,src:src},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                        // #endregion
+                    });
+                });
+            };
+            
+            // Run video debug after DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', videoDebug);
+            } else {
+                videoDebug();
+            }
+            
+            const logoContainer = document.querySelector('.logo-container');
+            const leftEye = document.getElementById('leftEye');
+            const rightEye = document.getElementById('rightEye');
+            const leftSmile = document.getElementById('leftSmile');
+            const rightSmile = document.getElementById('rightSmile');
+            
+            if (!logoContainer || !leftEye || !rightEye || !leftSmile || !rightSmile) return;
+
+            // Safe initialization with fallback values
+            const getSafeWindowDimensions = () => {
+                if (typeof window !== 'undefined' && window.innerWidth > 0 && window.innerHeight > 0) {
+                    return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+                }
+                return { x: 400, y: 400 };
+            };
+
+            let viewportCenter = getSafeWindowDimensions();
+            let cursorPosition = getSafeWindowDimensions();
+            let smoothedEyePosition = { x: 0, y: 0 };
+            let smoothedPosition = { x: 0, y: 0 };
+            let animationFrameId;
+
+            // Lerp function for smooth interpolation
+            const lerp = (start, end, factor) => {
+                return start + (end - start) * factor;
+            };
+
+            // Create path for rectangle with one rounded corner
+            const createRoundedRectPath = (x, y, width, height, r) => {
+                const { topLeft, topRight, bottomLeft, bottomRight } = r;
+                
+                let path = `M ${x + topLeft} ${y}`;
+                
+                if (topRight > 0) {
+                    path += ` L ${x + width - topRight} ${y}`;
+                    path += ` Q ${x + width} ${y} ${x + width} ${y + topRight}`;
+                } else {
+                    path += ` L ${x + width} ${y}`;
+                }
+                
+                if (bottomRight > 0) {
+                    path += ` L ${x + width} ${y + height - bottomRight}`;
+                    path += ` Q ${x + width} ${y + height} ${x + width - bottomRight} ${y + height}`;
+                } else {
+                    path += ` L ${x + width} ${y + height}`;
+                }
+                
+                if (bottomLeft > 0) {
+                    path += ` L ${x + bottomLeft} ${y + height}`;
+                    path += ` Q ${x} ${y + height} ${x} ${y + height - bottomLeft}`;
+                } else {
+                    path += ` L ${x} ${y + height}`;
+                }
+                
+                if (topLeft > 0) {
+                    path += ` L ${x} ${y + topLeft}`;
+                    path += ` Q ${x} ${y} ${x + topLeft} ${y}`;
+                } else {
+                    path += ` L ${x} ${y}`;
+                }
+                
+                path += ' Z';
+                return path;
+            };
+
+            // Calculate which corner should be rounded based on cursor position relative to viewport center
+            const getRoundedCorner = () => {
+                const deltaX = cursorPosition.x - viewportCenter.x;
+                const deltaY = cursorPosition.y - viewportCenter.y;
+                
+                const centerThreshold = 10;
+                if (Math.abs(deltaX) < centerThreshold && Math.abs(deltaY) < centerThreshold) {
+                    return { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 };
+                }
+                
+                const isRight = deltaX > 0;
+                const isBottom = deltaY > 0;
+                
+                const radius = 8;
+                
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const maxDistance = Math.sqrt(viewportCenter.x * viewportCenter.x + viewportCenter.y * viewportCenter.y);
+                const normalizedDistance = Math.min(distance / (maxDistance * 0.5), 1);
+                const cornerRadius = radius * normalizedDistance;
+                
+                if (isBottom && !isRight) {
+                    return { topLeft: 0, topRight: cornerRadius, bottomLeft: 0, bottomRight: 0 };
+                } else if (isBottom && isRight) {
+                    return { topLeft: cornerRadius, topRight: 0, bottomLeft: 0, bottomRight: 0 };
+                } else if (!isBottom && !isRight) {
+                    return { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: cornerRadius };
+                } else {
+                    return { topLeft: 0, topRight: 0, bottomLeft: cornerRadius, bottomRight: 0 };
+                }
+            };
+
+            const handleResize = () => {
+                if (typeof window !== 'undefined' && window.innerWidth > 0 && window.innerHeight > 0) {
+                    viewportCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+                }
+            };
+
+            const handleMouseMove = (e) => {
+                cursorPosition = { x: e.clientX, y: e.clientY };
+            };
+
+            // Smooth eye movement animation loop
+            const animate = () => {
+                if (logoContainer) {
+                    const rect = logoContainer.getBoundingClientRect();
+                    const logoCenterX = rect.left + rect.width / 2;
+                    const logoCenterY = rect.top + rect.height / 2;
+                    
+                    const deltaX = cursorPosition.x - logoCenterX;
+                    const deltaY = cursorPosition.y - logoCenterY;
+                    
+                    const maxOffset = 2;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    const normalizedX = distance > 0 ? deltaX / distance : 0;
+                    const normalizedY = distance > 0 ? deltaY / distance : 0;
+                    const scale = Math.min(distance / 100, 1);
+                    const targetX = normalizedX * maxOffset * scale;
+                    const targetY = normalizedY * maxOffset * scale;
+                    
+                    const newX = lerp(smoothedPosition.x, targetX, 0.1);
+                    const newY = lerp(smoothedPosition.y, targetY, 0.1);
+                    
+                    smoothedPosition = { x: newX, y: newY };
+                    smoothedEyePosition = { x: newX, y: newY };
+                    
+                    // Update eye paths with rounded corners
+                    const cornerRadius = getRoundedCorner();
+                    const leftEyePath = createRoundedRectPath(12.56, 32.48, 17.92, 13.12, cornerRadius);
+                    const rightEyePath = createRoundedRectPath(41.2, 32.48, 17.92, 13.12, cornerRadius);
+                    
+                    leftEye.setAttribute('d', leftEyePath);
+                    rightEye.setAttribute('d', rightEyePath);
+                    
+                    // Update smile positions
+                    leftSmile.style.transform = `translate(${smoothedEyePosition.x}px, ${smoothedEyePosition.y}px)`;
+                    rightSmile.style.transform = `translate(${smoothedEyePosition.x}px, ${smoothedEyePosition.y}px)`;
+                }
+                
+                animationFrameId = requestAnimationFrame(animate);
+            };
+
+            // Initialize
+            handleResize();
+            
+            // Set initial eye paths (no rounded corners initially)
+            const initialCornerRadius = { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 };
+            const initialLeftEyePath = createRoundedRectPath(12.56, 32.48, 17.92, 13.12, initialCornerRadius);
+            const initialRightEyePath = createRoundedRectPath(41.2, 32.48, 17.92, 13.12, initialCornerRadius);
+            leftEye.setAttribute('d', initialLeftEyePath);
+            rightEye.setAttribute('d', initialRightEyePath);
+            
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('resize', handleResize);
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('resize', handleResize);
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
