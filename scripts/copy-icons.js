@@ -16,7 +16,7 @@ if (!fs.existsSync(distIconsDir)) {
 
 // Copy SVG and PNG files if they exist
 const svgSizes = [16, 32];
-const pngSizes = [16, 32, 48, 128];
+const pngSizes = [16, 48, 128];
 let copied = 0;
 
 // Copy SVG files
